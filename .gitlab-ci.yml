@@ -1,0 +1,105 @@
+---
+stages:
+  - check
+  - test
+  - push
+
+variables:
+  CI_REGISTRY_URL: registry-test
+  CI_REGISTRY_USER: CI
+  REGISTRY_IMG_TAG: ${CI_REGISTRY_URL}.${COMPANY_DOMAIN}/docker_images/docker-molecule_debian12:latest
+  DOCKERHUB_TAG: ${DOCKERHUB_USER}/ansible_molecule_test_images:debian12
+  DOCKERHUB_USER: lotusnoir
+  GITHUB_USER: lotusnoir
+
+
+##################################################
+# CHECKS
+##################################################
+yamllint:
+  stage: check
+  image: sdesbure/yamllint
+  before_script:
+    - yamllint --version
+  script:
+    - yamllint .
+
+hadolint:
+  stage: check
+  image: hadolint/hadolint:latest-debian
+  before_script:
+    - hadolint --version
+  script:
+    - hadolint Dockerfile
+
+
+##################################################
+# TEST BUILD
+##################################################
+test_build:
+  stage: test
+  image: docker:latest
+  needs: ["yamllint", "hadolint"]
+  services:
+    - docker:dind
+  script:
+    - docker build -t test-build .
+    - docker stop test-debian12 && docker rm test-debian12
+    - docker run -d --name=test-debian12 --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro test-build
+    - docker exec test-debian12 systemctl --version
+    - docker stop test-debian12 && docker rm test-debian12
+
+
+##################################################
+# PUSH CODE AND IMAGE
+##################################################
+#push_img_on_gitlab:
+#  stage: push
+#  image: docker:latest
+#  needs: ["test_build"]
+#  services:
+#    - docker:dind
+#  before_script:
+#    - docker info
+#    - echo "${CI_REGISTRY_USER} ${CI_REGISTRY_TOKEN} ${CI_REGISTRY_URL}.${COMPANY_DOMAIN}"
+#    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_TOKEN}" "${CI_REGISTRY_URL}.${COMPANY_DOMAIN}"
+#  script:
+#    - docker build -t "${REGISTRY_IMG_TAG}" .
+#    - docker push "${REGISTRY_IMG_TAG}"
+
+push_img_on_dockerhub:
+  stage: push
+  image: docker:latest
+  needs: ["test_build"]
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+    - docker login -u "${DOCKERHUB_USER}" -p "${DOCKERHUB_TOKEN}"
+  script:
+    - docker build -t "${DOCKERHUB_TAG}" .
+    - docker push "${DOCKERHUB_TAG}"
+
+push_src_on_github:
+  stage: push
+  image: alpine:latest
+  needs: ["test_build"]
+  before_script:
+    - apk add git openssh-client
+    - eval $(ssh-agent -s)
+    - echo "${GITHUB_USER_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tUser ansible\n\tStrictHostKeyChecking no\n\tForwardAgent yes\n\n" > ~/.ssh/config
+    - git config --global user.email "${GITHUB_USER_EMAIL}"
+    - git config --global user.name "${GITHUB_USER}"
+    - git config --global init.defaultBranch main
+    - COMMENT=$(git log -1 --pretty=%B | head -1)
+  script:
+    - git clone git@github.com:${GITHUB_USER}/docker-molecule_debian12.git /tmp/docker-molecule_debian12
+    - rm -rf .git
+    - cp -r . /tmp/docker-molecule_debian12/
+    - cd /tmp/docker-molecule_debian12
+    - git add -A
+    - git commit -m "${COMMENT}" || echo "No changes, nothing to commit!"
+    - git push
