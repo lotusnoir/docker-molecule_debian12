@@ -5,7 +5,7 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get upgrade \
+RUN apt-get update && apt-get -y upgrade \
     && apt-get install -y --no-install-recommends systemd systemd-sysv sudo python3-apt python3-pip python3-setuptools python3-wheel iproute2 net-tools procps wget ca-certificates \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc /usr/share/man \
     && apt-get clean
