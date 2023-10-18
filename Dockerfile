@@ -1,13 +1,13 @@
 FROM debian:12
 LABEL maintainer="lotusnoir"
 
-ENV container docker
-ENV LC_ALL C
-ENV DEBIAN_FRONTEND noninteractive
+ARG container docker
+ARG LC_ALL C
+ARG DEBIAN_FRONTEND noninteractive
 STOPSIGNAL SIGRTMIN+3
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends locales systemd systemd-sysv sudo python3-apt python3-pip python3-setuptools python3-wheel iproute2 net-tools procps wget ca-certificates \
+    && apt-get install -y --no-install-recommends mlocate apt-utils locales systemd systemd-sysv sudo python3-apt python3-pip python3-setuptools python3-wheel iproute2 net-tools procps wget ca-certificates \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc /usr/share/man \
     && apt-get clean
 
