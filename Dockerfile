@@ -21,7 +21,7 @@ ENV LANGUAGE=en_US:en
 RUN pip3 install --break-system-packages --no-cache-dir --upgrade pip \
     && pip3 install --break-system-packages --no-cache-dir ansible cryptography jmespath
 
-RUN wget -q -O /usr/local/bin/goss https://github.com/aelsabbahy/goss/releases/download/v0.4.2/goss-linux-amd64 && chmod +x /usr/local/bin/goss
+RUN wget -q -O /usr/local/bin/goss https://github.com/aelsabbahy/goss/releases/download/v0.4.8/goss-linux-amd64 && chmod +x /usr/local/bin/goss
 
 RUN mkdir -p /lib/systemd && ln -s /lib/systemd/system /usr/lib/systemd/system;
 RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
