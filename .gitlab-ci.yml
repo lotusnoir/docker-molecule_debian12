@@ -44,8 +44,8 @@ test_build:
     - docker:dind
   script:
     - docker build -t test-build .
-    - docker stop test-debian12 && docker rm test-debian12
-    - docker run -d --name=test-debian12 --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro test-build
+    - docker stop test-debian12 || true && docker rm test-debian12 || true
+    - docker run -d --name=test-debian12 --privileged --cgroup-parent=docker.slice --cgroupns private test-build
     - docker exec test-debian12 systemctl --version
     - docker stop test-debian12 && docker rm test-debian12
 
