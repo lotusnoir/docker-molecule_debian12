@@ -45,7 +45,7 @@ test_build:
   script:
     - docker build -t test-build .
     - docker stop test-debian12 || true && docker rm test-debian12 || true
-    - docker run -d --name=test-debian12 --privileged --cgroup-parent=docker.slice --cgroupns private test-build
+    - docker run -d --name=test-debian12 --cgroupns=host --volume=/sys/fs/cgroup:/sys/fs/cgroup:rw test-build
     - docker exec test-debian12 systemctl --version
     - docker stop test-debian12 && docker rm test-debian12
 
