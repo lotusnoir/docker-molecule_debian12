@@ -1,9 +1,9 @@
 FROM debian:12
 LABEL maintainer="lotusnoir"
 
-ARG container docker
-ARG LC_ALL C
-ARG DEBIAN_FRONTEND noninteractive
+ARG container=docker
+ARG LC_ALL=C
+ARG DEBIAN_FRONTEND=noninteractive
 STOPSIGNAL SIGRTMIN+3
 
 RUN apt-get update \
@@ -14,6 +14,7 @@ RUN apt-get update \
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=en_US.UTF-8
+
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV LANGUAGE=en_US:en      
@@ -33,5 +34,4 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 VOLUME [ "/tmp", "/run", "/run/lock" ]
-#ENTRYPOINT ["/lib/systemd/systemd", "log-level=info", "unit=sysinit.target"]
 ENTRYPOINT ["/lib/systemd/systemd", "log-level=info"]
