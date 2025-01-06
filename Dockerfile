@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 STOPSIGNAL SIGRTMIN+3
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends mlocate apt-utils locales systemd systemd-sysv sudo python3-apt python3-pip python3-setuptools python3-wheel iproute2 net-tools procps wget ca-certificates vim curl \
+    && apt-get install -y --no-install-recommends git mlocate apt-utils locales systemd systemd-sysv sudo python3-apt python3-pip python3-setuptools python3-wheel iproute2 net-tools procps wget ca-certificates vim curl \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc /usr/share/man \
     && apt-get clean
 

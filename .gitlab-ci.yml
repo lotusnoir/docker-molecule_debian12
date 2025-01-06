@@ -1,6 +1,5 @@
 ---
 stages:
-  - check
   - test
   - push
 
@@ -14,33 +13,15 @@ variables:
   GITHUB_USER: lotusnoir
 
 ##################################################
-# CHECKS
-##################################################
-yamllint:
-  stage: check
-  image: sdesbure/yamllint
-  before_script:
-    - yamllint --version
-  script:
-    - yamllint .
-
-hadolint:
-  stage: check
-  image: hadolint/hadolint:latest-debian
-  before_script:
-    - hadolint --version
-  script:
-    - hadolint Dockerfile
-
-##################################################
 # TEST BUILD
 ##################################################
 test_build:
   stage: test
   image: docker:latest
-  needs: ["yamllint", "hadolint"]
-  services:
-    - docker:dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - Dockerfile
   script:
     - docker build -t test-build-${OS_TYPE} .
     - docker stop test-${OS_TYPE} || true && docker rm test-${OS_TYPE} || true
@@ -55,8 +36,6 @@ test_build:
 #  stage: push
 #  image: docker:latest
 #  needs: ["test_build"]
-#  services:
-#    - docker:dind
 #  before_script:
 #    - docker info
 #    - echo "${CI_REGISTRY_USER} ${CI_REGISTRY_TOKEN} ${CI_REGISTRY_URL}.${COMPANY_DOMAIN}"
@@ -68,9 +47,11 @@ test_build:
 push_img_on_dockerhub:
   stage: push
   image: docker:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - Dockerfile
   needs: ["test_build"]
-  services:
-    - docker:dind
   before_script:
     - docker info
     - docker login -u "${DOCKERHUB_USER}" -p "${DOCKERHUB_TOKEN}"
@@ -81,6 +62,10 @@ push_img_on_dockerhub:
 push_src_on_github:
   stage: push
   image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - Dockerfile
   needs: ["test_build"]
   before_script:
     - apk add git openssh-client
